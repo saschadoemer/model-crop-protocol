@@ -1,6 +1,6 @@
 # Model Crop Protocol
 
-**Model Crop Protocol** is an MCP service that connects agricultural data from the agrirouter ecosystem with AI agents and automated workflows.
+**Model Crop Protocol** is a Model Context Protocol (MCP) service that connects agricultural data from the agrirouter ecosystem with AI agents and automated workflows.
 
 The service provides a structured interface for accessing machine data, task information, operational events, and other agricultural context through the **Model Context Protocol (MCP)**. It acts as a bridge between field-level data exchange and agent-based processing, making agrirouter information available in a controlled, consistent, and tool-friendly way.
 
