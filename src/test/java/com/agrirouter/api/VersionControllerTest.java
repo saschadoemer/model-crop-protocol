@@ -17,8 +17,8 @@ public class VersionControllerTest {
     HttpClient client;
 
     @Test
-    void testHello() {
-        String response = client.toBlocking().retrieve(HttpRequest.GET("/hello"));
-        assertEquals("Hello World", response);
+    void testVersion() {
+        String response = client.toBlocking().retrieve(HttpRequest.GET("/version"));
+        assertEquals("1.0.0", response);
     }
 }
