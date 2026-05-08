@@ -1,4 +1,4 @@
-package com.agrirouter.api;
+package de.saschadoemer.agrirouter.mcp.controller;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;

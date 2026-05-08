@@ -18,11 +18,11 @@
         <packaging>jar</packaging>
         <jdk.version>23</jdk.version>
         <release.version>23</release.version>
-        <micronaut.version>4.7.6</micronaut.version>
+        <micronaut.version>4.10.13</micronaut.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <exec.mainClass>com.agrirouter.api.Main</exec.mainClass>
+        <exec.mainClass>de.saschadoemer.agrirouter.mcp.Main</exec.mainClass>
     </properties>
 
     <dependencies>
@@ -30,6 +30,11 @@
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-server-netty</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
@@ -86,7 +91,7 @@
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
-                        <arg>-Amicronaut.processing.group=com.agrirouter.api</arg>
+                        <arg>-Amicronaut.processing.group=de.saschadoemer.agrirouter.mcp</arg>
                         <arg>-Amicronaut.processing.module=model-crop-protocol</arg>
                     </compilerArgs>
                 </configuration>

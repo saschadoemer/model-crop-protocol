@@ -34,3 +34,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# local env files
+local.env
+.env.local
+.env.*.local
