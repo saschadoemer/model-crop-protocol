@@ -10,19 +10,28 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.annotation.QueryValue;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Controller for agrirouter authorization.
  */
-@Controller("/authorization")
+@Controller("/")
 public class AuthorizationController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationController.class);
+
+    private final TokenService tokenService;
+
+    private final Set<String> states = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Value("${agrirouter.oauth.client-id}")
     private String clientId;
@@ -33,19 +42,54 @@ public class AuthorizationController {
     @Value("${agrirouter.env.authorize-url}")
     private String authorizeUrl;
 
+    @Inject
+    public AuthorizationController(TokenService tokenService) {
+        this.tokenService = tokenService;
+    }
+
     /**
      * Get the agrirouter authorization URL.
      *
      * @return the agrirouter authorization URL
      */
-    @Get("/redirect")
+    @Get("/authorization/redirect")
     @Produces(MediaType.TEXT_PLAIN)
     public HttpResponse<String> getRedirectUri() {
         String state = generateRandomState();
+        states.add(state);
         String url = String.format("%s?client_id=%s&redirect_uri=%s&scope=endpoints:manage&state=%s",
                 authorizeUrl, clientId, redirectUri, state);
         LOG.info("Returning agrirouter authorization URL: {}", url);
         return HttpResponse.ok(url);
+    }
+
+    /**
+     * Callback for the agrirouter authorization.
+     *
+     * @param state    the state parameter
+     * @param error    the error parameter
+     * @param tenantId the tenant ID parameter
+     * @return the response
+     */
+    @Get("/agrirouter/auth/callback")
+    public HttpResponse<String> callback(@QueryValue("state") String state,
+                                         @Nullable @QueryValue("error") String error,
+                                         @Nullable @QueryValue("tenant_id") String tenantId) {
+        LOG.info("Received callback from agrirouter with state: {}, error: {}, tenant_id: {}", state, error, tenantId);
+        if (!states.contains(state)) {
+            LOG.error("State parameter does not match the value originally sent.");
+            return HttpResponse.status(HttpStatus.FORBIDDEN).body("State parameter does not match the value originally sent.");
+        }
+        states.remove(state);
+        if (error != null && !error.isEmpty()) {
+            LOG.error("Error during agrirouter authorization: {}", error);
+            return HttpResponse.badRequest("Error during agrirouter authorization: " + error);
+        }
+        if (tenantId != null && !tenantId.isEmpty()) {
+            tokenService.setTenantId(tenantId);
+            LOG.info("Successfully stored tenant ID: {}", tenantId);
+        }
+        return HttpResponse.ok("Authorization successful. You can close this window now.");
     }
 
     private String generateRandomState() {

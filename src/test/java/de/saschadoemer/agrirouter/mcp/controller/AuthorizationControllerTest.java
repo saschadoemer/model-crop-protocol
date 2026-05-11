@@ -4,6 +4,7 @@ import de.saschadoemer.agrirouter.mcp.service.TokenService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
@@ -28,6 +29,9 @@ public class AuthorizationControllerTest {
     @Client("/")
     HttpClient client;
 
+    @Inject
+    TokenService tokenService;
+
     @Test
     void testGetRedirectUri() {
         String response = client.toBlocking().retrieve(
@@ -39,6 +43,57 @@ public class AuthorizationControllerTest {
         assertTrue(response.contains("redirect_uri=https://my-app.com/callback"));
         assertTrue(response.contains("scope=endpoints:manage"));
         assertTrue(response.contains("state="));
+    }
+
+    @Test
+    void testCallbackSuccess() {
+        // 1. Get the redirect URI to generate and store a state
+        String redirectUrl = client.toBlocking().retrieve(
+                HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
+        );
+        String state = redirectUrl.substring(redirectUrl.indexOf("state=") + 6);
+
+        // 2. Call the callback with the state and a tenant_id
+        HttpResponse<String> response = client.toBlocking().exchange(
+                HttpRequest.GET("/agrirouter/auth/callback?state=" + state + "&tenant_id=test-tenant-id"),
+                String.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatus());
+        assertEquals("Authorization successful. You can close this window now.", response.body());
+        assertEquals("test-tenant-id", tokenService.getTenantId());
+    }
+
+    @Test
+    void testCallbackError() {
+        // 1. Get the redirect URI to generate and store a state
+        String redirectUrl = client.toBlocking().retrieve(
+                HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
+        );
+        String state = redirectUrl.substring(redirectUrl.indexOf("state=") + 6);
+
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                client.toBlocking().exchange(
+                        HttpRequest.GET("/agrirouter/auth/callback?state=" + state + "&error=access_denied"),
+                        String.class
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertTrue(exception.getResponse().getBody(String.class).orElse("").contains("Error during agrirouter authorization: access_denied"));
+    }
+
+    @Test
+    void testCallbackInvalidState() {
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                client.toBlocking().exchange(
+                        HttpRequest.GET("/agrirouter/auth/callback?state=invalid-state&tenant_id=test-tenant-id"),
+                        String.class
+                )
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+        assertTrue(exception.getResponse().getBody(String.class).orElse("").contains("State parameter does not match the value originally sent."));
     }
 
     @Singleton

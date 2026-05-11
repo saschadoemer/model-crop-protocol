@@ -39,9 +39,29 @@ public class TokenService {
 
     private Instant tokenExpirationTime;
 
+    private String tenantId;
+
     public TokenService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newHttpClient();
+    }
+
+    /**
+     * Get the tenant ID.
+     *
+     * @return the tenant ID
+     */
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    /**
+     * Set the tenant ID.
+     *
+     * @param tenantId the tenant ID
+     */
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     /**
