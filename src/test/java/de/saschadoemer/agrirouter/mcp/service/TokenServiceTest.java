@@ -43,7 +43,7 @@ public class TokenServiceTest {
     @Test
     void testPropertiesLoaded() {
         String tokenUrl = applicationContext.getProperty("agrirouter.env.token-url", String.class).orElse(null);
-        assertNotNull(tokenUrl, "Property agrirouter.env.token-url should be loaded from application.yml");
+        assertNotNull(tokenUrl, "Property agrirouter.env.token-url should be loaded from application.properties");
         assertEquals("https://api-oauth.agrirouter.com/token", tokenUrl);
     }
 
