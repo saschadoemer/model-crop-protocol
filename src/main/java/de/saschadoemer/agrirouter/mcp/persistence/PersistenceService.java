@@ -52,6 +52,9 @@ public class PersistenceService {
             try {
                 String tenantId = Files.readString(storagePath).trim();
                 LOG.info("Successfully loaded tenant ID from {}.", storagePath.toAbsolutePath());
+                if (tenantId.isEmpty()) {
+                    return Optional.empty();
+                }
                 return Optional.of(tenantId);
             } catch (IOException e) {
                 LOG.error("Could not load tenant ID from {}.", storagePath.toAbsolutePath(), e);
