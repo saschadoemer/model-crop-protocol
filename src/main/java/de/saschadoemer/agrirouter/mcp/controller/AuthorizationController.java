@@ -81,11 +81,10 @@ public class AuthorizationController {
                                          @Nullable @QueryValue("error") String error,
                                          @Nullable @QueryValue("tenant_id") String tenantId) {
         LOG.info("Received callback from agrirouter with state: {}, error: {}, tenant_id: {}", state, error, tenantId);
-        if (!states.contains(state)) {
+        if (!states.remove(state)) {
             LOG.error("State parameter does not match the value originally sent.");
             return HttpResponse.status(HttpStatus.FORBIDDEN).body("State parameter does not match the value originally sent.");
         }
-        states.remove(state);
         if (error != null && !error.isEmpty()) {
             LOG.error("Error during agrirouter authorization: {}", error);
             return HttpResponse.badRequest("Error during agrirouter authorization: " + error);
