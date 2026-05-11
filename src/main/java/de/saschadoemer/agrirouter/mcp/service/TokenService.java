@@ -118,4 +118,17 @@ public class TokenService {
         }
     }
 
+    /**
+     * Decode and cache the token.
+     *
+     * @param jwt the token as JWT
+     */
+    @SuppressWarnings({"unused"})
+    private void decodeAndCacheToken(String jwt) {
+        this.cachedTokenResponse = new TokenResponse();
+        this.cachedTokenResponse.setAccessToken(jwt);
+        this.cachedTokenResponse.setExpiresIn(3600);
+        this.tokenExpirationTime = Instant.now().plusSeconds(3600);
+    }
+
 }

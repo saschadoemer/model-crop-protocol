@@ -55,7 +55,7 @@ public class PersistenceServiceTest {
     }
 
     @Test
-    void testCustomStoragePath() throws IOException {
+    void testCustomStoragePath() {
         try (ApplicationContext context = ApplicationContext.run(Map.of("persistence.storage-path", CUSTOM_STORAGE_FILE))) {
             PersistenceService customService = context.getBean(PersistenceService.class);
             String tenantId = "custom-tenant-id";
