@@ -1,4 +1,4 @@
-package com.agrirouter.api;
+package de.saschadoemer.agrirouter.mcp;
 
 import io.micronaut.runtime.Micronaut;
 

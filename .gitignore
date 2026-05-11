@@ -34,3 +34,11 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# local env files
+local.env
+.env.local
+.env.*.local
+.local-storage
+# Local test data, per default
+storage.properties
