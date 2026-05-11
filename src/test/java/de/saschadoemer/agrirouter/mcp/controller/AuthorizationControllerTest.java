@@ -103,7 +103,11 @@ public class AuthorizationControllerTest {
     }
 
     private static String extractQueryParam(String url, String paramName) {
-        return Arrays.stream(URI.create(url).getRawQuery().split("&"))
+        String rawQuery = URI.create(url).getRawQuery();
+        if (rawQuery == null) {
+            throw new RuntimeException("URL has no query string: " + url);
+        }
+        return Arrays.stream(rawQuery.split("&"))
                 .map(p -> p.split("=", 2))
                 .filter(p -> p[0].equals(paramName))
                 .map(p -> p.length > 1 ? p[1] : "")

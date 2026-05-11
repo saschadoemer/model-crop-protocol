@@ -16,6 +16,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
 
 /**
  * Service to handle agrirouter tokens.
@@ -141,25 +142,26 @@ public class TokenService {
     private void decodeAndCacheToken(String jwt) {
         this.cachedTokenResponse = new TokenResponse();
         this.cachedTokenResponse.setAccessToken(jwt);
-        long expSeconds = -1;
+        long expirationEpochSeconds = -1;
         String[] parts = jwt.split("\\.");
         if (parts.length >= 2) {
             try {
                 byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
                 String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
-                int expIdx = payloadJson.indexOf("\"exp\":");
-                if (expIdx != -1) {
-                    int start = expIdx + 6;
-                    while (start < payloadJson.length() && !Character.isDigit(payloadJson.charAt(start))) start++;
-                    int end = start;
-                    while (end < payloadJson.length() && Character.isDigit(payloadJson.charAt(end))) end++;
-                    expSeconds = Long.parseLong(payloadJson.substring(start, end));
+                @SuppressWarnings("unchecked")
+                Map<String, Object> claims = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .readValue(payloadJson, Map.class);
+                Object exp = claims.get("exp");
+                if (exp instanceof Number) {
+                    expirationEpochSeconds = ((Number) exp).longValue();
                 }
             } catch (Exception e) {
                 LOG.warn("Failed to decode JWT payload, using default expiration", e);
             }
         }
-        this.tokenExpirationTime = expSeconds > 0 ? Instant.ofEpochSecond(expSeconds) : Instant.now().plusSeconds(3600);
+        this.tokenExpirationTime = expirationEpochSeconds > 0
+                ? Instant.ofEpochSecond(expirationEpochSeconds)
+                : Instant.now().plusSeconds(3600);
     }
 
 }
