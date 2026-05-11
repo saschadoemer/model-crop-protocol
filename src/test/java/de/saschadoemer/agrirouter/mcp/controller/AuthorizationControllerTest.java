@@ -16,6 +16,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest
@@ -43,8 +46,8 @@ public class AuthorizationControllerTest {
         assertNotNull(response);
         assertTrue(response.contains("https://app.agrirouter.com/api/authorize"));
         assertTrue(response.contains("client_id=test-client-id"));
-        assertTrue(response.contains("redirect_uri=https://my-app.com/callback"));
-        assertTrue(response.contains("scope=endpoints:manage"));
+        assertTrue(response.contains("redirect_uri=https%3A%2F%2Fmy-app.com%2Fcallback"));
+        assertTrue(response.contains("scope=endpoints%3Amanage"));
         assertTrue(response.contains("state="));
     }
 
@@ -54,7 +57,7 @@ public class AuthorizationControllerTest {
         String redirectUrl = client.toBlocking().retrieve(
                 HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
         );
-        String state = redirectUrl.substring(redirectUrl.indexOf("state=") + 6);
+        String state = extractQueryParam(redirectUrl, "state");
 
         // 2. Call the callback with the state and a tenant_id
         HttpResponse<String> response = client.toBlocking().exchange(
@@ -73,7 +76,7 @@ public class AuthorizationControllerTest {
         String redirectUrl = client.toBlocking().retrieve(
                 HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
         );
-        String state = redirectUrl.substring(redirectUrl.indexOf("state=") + 6);
+        String state = extractQueryParam(redirectUrl, "state");
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
                 client.toBlocking().exchange(
@@ -97,6 +100,15 @@ public class AuthorizationControllerTest {
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
         assertTrue(exception.getResponse().getBody(String.class).orElse("").contains("State parameter does not match the value originally sent."));
+    }
+
+    private static String extractQueryParam(String url, String paramName) {
+        return Arrays.stream(URI.create(url).getRawQuery().split("&"))
+                .map(p -> p.split("=", 2))
+                .filter(p -> p[0].equals(paramName))
+                .map(p -> p.length > 1 ? p[1] : "")
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Parameter '" + paramName + "' not found in URL"));
     }
 
     @Singleton

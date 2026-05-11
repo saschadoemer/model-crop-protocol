@@ -13,7 +13,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 
 /**
  * Service to handle agrirouter tokens.
@@ -115,7 +117,7 @@ public class TokenService {
             if (cachedTokenResponse == null) {
                 throw new RuntimeException("Failed to fetch token: token response body could not be parsed.");
             }
-            Long expiresIn = cachedTokenResponse.getExpiresIn();
+            Integer expiresIn = cachedTokenResponse.getExpiresIn();
             if (expiresIn == null || expiresIn <= 0) {
                 throw new RuntimeException("Failed to fetch token: token response is missing a valid expires_in value.");
             }
@@ -135,8 +137,25 @@ public class TokenService {
     private void decodeAndCacheToken(String jwt) {
         this.cachedTokenResponse = new TokenResponse();
         this.cachedTokenResponse.setAccessToken(jwt);
-        this.cachedTokenResponse.setExpiresIn(3600);
-        this.tokenExpirationTime = Instant.now().plusSeconds(3600);
+        long expSeconds = -1;
+        String[] parts = jwt.split("\\.");
+        if (parts.length >= 2) {
+            try {
+                byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
+                String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
+                int expIdx = payloadJson.indexOf("\"exp\":");
+                if (expIdx != -1) {
+                    int start = expIdx + 6;
+                    while (start < payloadJson.length() && !Character.isDigit(payloadJson.charAt(start))) start++;
+                    int end = start;
+                    while (end < payloadJson.length() && Character.isDigit(payloadJson.charAt(end))) end++;
+                    expSeconds = Long.parseLong(payloadJson.substring(start, end));
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to decode JWT payload, using default expiration", e);
+            }
+        }
+        this.tokenExpirationTime = expSeconds > 0 ? Instant.ofEpochSecond(expSeconds) : Instant.now().plusSeconds(3600);
     }
 
 }

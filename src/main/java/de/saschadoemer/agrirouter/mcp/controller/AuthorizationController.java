@@ -14,6 +14,8 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collections;
@@ -56,8 +58,12 @@ public class AuthorizationController {
     public HttpResponse<String> getRedirectUri() {
         String state = generateRandomState();
         states.add(state);
-        String url = String.format("%s?client_id=%s&redirect_uri=%s&scope=endpoints:manage&state=%s",
-                authorizeUrl, clientId, redirectUri, state);
+        String url = String.format("%s?client_id=%s&redirect_uri=%s&scope=%s&state=%s",
+                authorizeUrl,
+                URLEncoder.encode(clientId, StandardCharsets.UTF_8),
+                URLEncoder.encode(redirectUri, StandardCharsets.UTF_8),
+                URLEncoder.encode("endpoints:manage", StandardCharsets.UTF_8),
+                URLEncoder.encode(state, StandardCharsets.UTF_8));
         LOG.info("Returning agrirouter authorization URL: {}", url);
         return HttpResponse.ok(url);
     }
