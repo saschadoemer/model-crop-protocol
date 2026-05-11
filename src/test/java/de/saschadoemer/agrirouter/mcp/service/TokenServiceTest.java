@@ -1,6 +1,7 @@
 package de.saschadoemer.agrirouter.mcp.service;
 
 import de.saschadoemer.agrirouter.mcp.dto.TokenResponse;
+import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -9,9 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 import java.util.Base64;
-import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
 @Property(name = "agrirouter.oauth.client-id", value = "test-client")
@@ -23,6 +24,21 @@ public class TokenServiceTest {
 
     @Inject
     TokenService tokenService;
+
+    @Inject
+    PersistenceService persistenceService;
+
+    @Test
+    void testTenantIdPersistence() {
+        String tenantId = "test-persistence-id";
+        tokenService.setTenantId(tenantId);
+        
+        // Verify it's in TokenService
+        assertEquals(tenantId, tokenService.getTenantId());
+        
+        // Verify it's in PersistenceService
+        assertEquals(tenantId, persistenceService.loadTenantId().orElse(null));
+    }
 
     @Test
     void testPropertiesLoaded() {

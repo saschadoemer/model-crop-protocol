@@ -1,8 +1,10 @@
 package de.saschadoemer.agrirouter.mcp.controller;
 
+import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
 import de.saschadoemer.agrirouter.mcp.service.TokenService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest
+@Property(name = "spec.name", value = "AuthorizationControllerTest")
 @Property(name = "agrirouter.oauth.client-id", value = "test-client-id")
 @Property(name = "agrirouter.oauth.client-secret", value = "test-client-secret")
 @Property(name = "agrirouter.oauth.redirect-uri", value = "https://my-app.com/callback")
@@ -98,9 +101,11 @@ public class AuthorizationControllerTest {
 
     @Singleton
     @Replaces(TokenService.class)
+    @Requires(property = "spec.name", value = "AuthorizationControllerTest")
     static class MockTokenService extends TokenService {
-        public MockTokenService() {
-            super(null);
+        @Inject
+        public MockTokenService(PersistenceService persistenceService) {
+            super(null, persistenceService);
         }
 
         @Override

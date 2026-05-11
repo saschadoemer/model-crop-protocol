@@ -1,6 +1,7 @@
 package de.saschadoemer.agrirouter.mcp.service;
 
 import de.saschadoemer.agrirouter.mcp.dto.TokenResponse;
+import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
@@ -24,6 +25,8 @@ public class TokenService {
 
     private final ObjectMapper objectMapper;
 
+    private final PersistenceService persistenceService;
+
     private final HttpClient httpClient;
 
     @Value("${agrirouter.oauth.client-id}")
@@ -41,9 +44,13 @@ public class TokenService {
 
     private String tenantId;
 
-    public TokenService(ObjectMapper objectMapper) {
+    public TokenService(ObjectMapper objectMapper, PersistenceService persistenceService) {
         this.objectMapper = objectMapper;
+        this.persistenceService = persistenceService;
         this.httpClient = HttpClient.newHttpClient();
+        if (this.persistenceService != null) {
+            this.persistenceService.loadTenantId().ifPresent(id -> this.tenantId = id);
+        }
     }
 
     /**
@@ -62,6 +69,9 @@ public class TokenService {
      */
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+        if (this.persistenceService != null) {
+            this.persistenceService.saveTenantId(tenantId);
+        }
     }
 
     /**
