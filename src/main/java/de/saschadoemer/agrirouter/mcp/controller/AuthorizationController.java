@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Controller for agrirouter authorization.
  */
-@Controller("/")
+@Controller
 public class AuthorizationController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationController.class);
