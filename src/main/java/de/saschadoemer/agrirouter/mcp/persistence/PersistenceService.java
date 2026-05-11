@@ -58,7 +58,7 @@ public class PersistenceService {
             try {
                 String json = Files.readString(storagePath);
                 LOG.info("Successfully loaded state from {}.", storagePath.toAbsolutePath());
-                if (json == null || json.isEmpty()) {
+                if (json.isEmpty()) {
                     return Optional.empty();
                 }
                 return Optional.of(objectMapper.readValue(json, AgrirouterState.class));

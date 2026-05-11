@@ -1,5 +1,6 @@
 package de.saschadoemer.agrirouter.mcp.service;
 
+import de.saschadoemer.agrirouter.mcp.dto.AgrirouterState;
 import de.saschadoemer.agrirouter.mcp.dto.response.TokenResponse;
 import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
 import io.micronaut.context.ApplicationContext;
@@ -47,7 +48,7 @@ public class TokenServiceTest {
         assertEquals(tenantId, tokenService.getTenantId());
         
         // Verify it's in PersistenceService
-        assertEquals(tenantId, persistenceService.load().map(state -> state.getTenantId()).orElse(null));
+        assertEquals(tenantId, persistenceService.load().map(AgrirouterState::getTenantId).orElse(null));
     }
 
     @Test

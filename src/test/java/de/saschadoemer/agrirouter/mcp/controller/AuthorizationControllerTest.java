@@ -70,7 +70,7 @@ public class AuthorizationControllerTest {
         String redirectUrl = client.toBlocking().retrieve(
                 HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
         );
-        String state = extractQueryParam(redirectUrl, "state");
+        String state = extractQueryParam(redirectUrl);
 
         // 2. Call the callback with the state and a tenant_id
         HttpResponse<String> response = client.toBlocking().exchange(
@@ -89,7 +89,7 @@ public class AuthorizationControllerTest {
         String redirectUrl = client.toBlocking().retrieve(
                 HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
         );
-        String state = extractQueryParam(redirectUrl, "state");
+        String state = extractQueryParam(redirectUrl);
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
                 client.toBlocking().exchange(
@@ -115,17 +115,17 @@ public class AuthorizationControllerTest {
         assertTrue(exception.getResponse().getBody(String.class).orElse("").contains("State parameter does not match the value originally sent."));
     }
 
-    private static String extractQueryParam(String url, String paramName) {
+    private static String extractQueryParam(String url) {
         String rawQuery = URI.create(url).getRawQuery();
         if (rawQuery == null) {
             throw new RuntimeException("URL has no query string: " + url);
         }
         return Arrays.stream(rawQuery.split("&"))
                 .map(p -> p.split("=", 2))
-                .filter(p -> p[0].equals(paramName))
+                .filter(p -> p[0].equals("state"))
                 .map(p -> p.length > 1 ? p[1] : "")
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Parameter '" + paramName + "' not found in URL"));
+                .orElseThrow(() -> new RuntimeException("Parameter '" + "state" + "' not found in URL"));
     }
 
     @Singleton

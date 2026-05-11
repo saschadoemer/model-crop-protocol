@@ -41,7 +41,7 @@ public class EndpointServiceTest {
 
         assertNotNull(subscriptions);
         assertEquals(1, subscriptions.size());
-        assertEquals("iso:11783:-10:taskdata:zip", subscriptions.get(0).getMessageType());
+        assertEquals("iso:11783:-10:taskdata:zip", subscriptions.getFirst().getMessageType());
     }
 
     @Test
