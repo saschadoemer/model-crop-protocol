@@ -1,5 +1,6 @@
 package de.saschadoemer.agrirouter.mcp.controller;
 
+import de.saschadoemer.agrirouter.mcp.service.EndpointService;
 import de.saschadoemer.agrirouter.mcp.service.TokenService;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
@@ -32,6 +33,8 @@ public class AuthorizationController {
 
     private final TokenService tokenService;
 
+    private final EndpointService endpointService;
+
     private final Set<String> states = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Value("${agrirouter.oauth.client-id}")
@@ -44,8 +47,9 @@ public class AuthorizationController {
     private String authorizeUrl;
 
     @Inject
-    public AuthorizationController(TokenService tokenService) {
+    public AuthorizationController(TokenService tokenService, EndpointService endpointService) {
         this.tokenService = tokenService;
+        this.endpointService = endpointService;
     }
 
     /**
@@ -92,6 +96,8 @@ public class AuthorizationController {
         if (tenantId != null && !tenantId.isEmpty()) {
             tokenService.setTenantId(tenantId);
             LOG.info("Successfully stored tenant ID: {}", tenantId);
+            endpointService.createEndpoint();
+            LOG.info("Successfully triggered endpoint creation for tenant ID: {}", tenantId);
         }
         return HttpResponse.ok("Authorization successful. You can close this window now.");
     }

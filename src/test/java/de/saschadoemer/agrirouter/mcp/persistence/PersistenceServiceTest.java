@@ -1,5 +1,6 @@
 package de.saschadoemer.agrirouter.mcp.persistence;
 
+import de.saschadoemer.agrirouter.mcp.dto.AgrirouterState;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -21,8 +22,8 @@ public class PersistenceServiceTest {
     @Inject
     PersistenceService persistenceService;
 
-    private static final String STORAGE_FILE = "storage.properties";
-    private static final String CUSTOM_STORAGE_FILE = "temp/subdir/custom.properties";
+    private static final String STORAGE_FILE = "storage.json";
+    private static final String CUSTOM_STORAGE_FILE = "temp/subdir/custom.json";
 
     @AfterEach
     void cleanup() throws IOException {
@@ -38,33 +39,38 @@ public class PersistenceServiceTest {
     }
 
     @Test
-    void testSaveAndLoadTenantId() {
-        String tenantId = "test-tenant-id";
-        persistenceService.saveTenantId(tenantId);
+    void testSaveAndLoadState() {
+        AgrirouterState state = new AgrirouterState();
+        state.setTenantId("test-tenant-id");
+        state.setExternalId("test-external-id");
+        persistenceService.save(state);
 
-        Optional<String> loadedTenantId = persistenceService.loadTenantId();
-        assertTrue(loadedTenantId.isPresent());
-        assertEquals(tenantId, loadedTenantId.get());
+        Optional<AgrirouterState> loadedState = persistenceService.load();
+        assertTrue(loadedState.isPresent());
+        assertEquals(state.getTenantId(), loadedState.get().getTenantId());
+        assertEquals(state.getExternalId(), loadedState.get().getExternalId());
         assertTrue(Files.exists(Paths.get(STORAGE_FILE)));
     }
 
     @Test
-    void testLoadNonExistentTenantId() {
-        Optional<String> loadedTenantId = persistenceService.loadTenantId();
-        assertFalse(loadedTenantId.isPresent());
+    void testLoadNonExistentState() {
+        Optional<AgrirouterState> loadedState = persistenceService.load();
+        assertFalse(loadedState.isPresent());
     }
 
     @Test
     void testCustomStoragePath() {
         try (ApplicationContext context = ApplicationContext.run(Map.of("persistence.storage-path", CUSTOM_STORAGE_FILE))) {
             PersistenceService customService = context.getBean(PersistenceService.class);
-            String tenantId = "custom-tenant-id";
-            customService.saveTenantId(tenantId);
+            AgrirouterState state = new AgrirouterState();
+            state.setTenantId("custom-tenant-id");
+            customService.save(state);
 
-            Optional<String> loadedTenantId = customService.loadTenantId();
-            assertTrue(loadedTenantId.isPresent());
-            assertEquals(tenantId, loadedTenantId.get());
+            Optional<AgrirouterState> loadedState = customService.load();
+            assertTrue(loadedState.isPresent());
+            assertEquals(state.getTenantId(), loadedState.get().getTenantId());
             assertTrue(Files.exists(Paths.get(CUSTOM_STORAGE_FILE)));
         }
     }
+
 }

@@ -1,6 +1,7 @@
 package de.saschadoemer.agrirouter.mcp.controller;
 
 import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
+import de.saschadoemer.agrirouter.mcp.service.EndpointService;
 import de.saschadoemer.agrirouter.mcp.service.TokenService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
@@ -14,9 +15,13 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +34,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Property(name = "agrirouter.env.authorize-url", value = "https://app.agrirouter.com/api/authorize")
 @Property(name = "agrirouter.env.token-url", value = "https://api-oauth.agrirouter.com/token")
 @Property(name = "agrirouter.env.api-url", value = "https://api.agrirouter.com")
+@Property(name = "agrirouter.application-id", value = "test-app-id")
+@Property(name = "agrirouter.software-version-id", value = "test-version-id")
+@Property(name = "persistence.storage-path", value = "storage-auth-test.json")
 public class AuthorizationControllerTest {
 
     @Inject
@@ -37,6 +45,11 @@ public class AuthorizationControllerTest {
 
     @Inject
     TokenService tokenService;
+
+    @AfterEach
+    void cleanup() throws IOException {
+        Files.deleteIfExists(Paths.get("storage-auth-test.json"));
+    }
 
     @Test
     void testGetRedirectUri() {
@@ -127,6 +140,20 @@ public class AuthorizationControllerTest {
         @Override
         public String getAccessToken() {
             return "test-token";
+        }
+    }
+
+    @Singleton
+    @Replaces(EndpointService.class)
+    @Requires(property = "spec.name", value = "AuthorizationControllerTest")
+    static class MockEndpointService extends EndpointService {
+        public MockEndpointService() {
+            super(null, null, null);
+        }
+
+        @Override
+        public void createEndpoint() {
+            // Do nothing
         }
     }
 }
