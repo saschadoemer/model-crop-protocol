@@ -49,27 +49,33 @@ public class TokenServiceTest {
 
     @Test
     void testJwtDecoding() throws Exception {
-        // Create a mock JWT
+        // Create a mock JWT with an expiration claim
+        long expirationEpochSeconds = java.time.Instant.now().plusSeconds(3600).getEpochSecond();
         String header = Base64.getUrlEncoder().encodeToString("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes());
-        String payload = Base64.getUrlEncoder().encodeToString("{\"sub\":\"test-user\",\"name\":\"John Doe\"}".getBytes());
+        String payload = Base64.getUrlEncoder().encodeToString(
+                ("{\"sub\":\"test-user\",\"name\":\"John Doe\",\"exp\":" + expirationEpochSeconds + "}").getBytes()
+        );
         String mockJwt = header + "." + payload + ".signature";
-
-        // Mock the cachedTokenResponse to avoid fetchToken() call
-        TokenResponse mockResponse = new TokenResponse();
-        mockResponse.setAccessToken(mockJwt);
-        mockResponse.setExpiresIn(3600);
-        
-        java.lang.reflect.Field responseField = TokenService.class.getDeclaredField("cachedTokenResponse");
-        responseField.setAccessible(true);
-        responseField.set(tokenService, mockResponse);
-        
-        java.lang.reflect.Field timeField = TokenService.class.getDeclaredField("tokenExpirationTime");
-        timeField.setAccessible(true);
-        timeField.set(tokenService, java.time.Instant.now().plusSeconds(3600));
 
         // Use reflection to call the private method for testing
         Method method = TokenService.class.getDeclaredMethod("decodeAndCacheToken", String.class);
         method.setAccessible(true);
         method.invoke(tokenService, mockJwt);
+
+        java.lang.reflect.Field responseField = TokenService.class.getDeclaredField("cachedTokenResponse");
+        responseField.setAccessible(true);
+        TokenResponse cachedResponse = (TokenResponse) responseField.get(tokenService);
+
+        java.lang.reflect.Field timeField = TokenService.class.getDeclaredField("tokenExpirationTime");
+        timeField.setAccessible(true);
+        java.time.Instant cachedExpirationTime = (java.time.Instant) timeField.get(tokenService);
+
+        assertNotNull(cachedResponse, "cachedTokenResponse should be set after decoding");
+        assertEquals(mockJwt, cachedResponse.getAccessToken(), "cached access token should match the decoded JWT");
+        assertEquals(
+                java.time.Instant.ofEpochSecond(expirationEpochSeconds),
+                cachedExpirationTime,
+                "tokenExpirationTime should match the exp claim from the JWT"
+        );
     }
 }
