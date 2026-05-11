@@ -112,8 +112,15 @@ public class TokenService {
                 throw new RuntimeException("Failed to fetch token: " + response.body());
             }
             cachedTokenResponse = objectMapper.readValue(response.body(), TokenResponse.class);
-            tokenExpirationTime = Instant.now().plusSeconds(cachedTokenResponse.getExpiresIn());
-            LOG.info("Successfully fetched and decoded agrirouter token. Expires in {} seconds.", cachedTokenResponse.getExpiresIn());
+            if (cachedTokenResponse == null) {
+                throw new RuntimeException("Failed to fetch token: token response body could not be parsed.");
+            }
+            Long expiresIn = cachedTokenResponse.getExpiresIn();
+            if (expiresIn == null || expiresIn <= 0) {
+                throw new RuntimeException("Failed to fetch token: token response is missing a valid expires_in value.");
+            }
+            tokenExpirationTime = Instant.now().plusSeconds(expiresIn);
+            LOG.info("Successfully fetched and decoded agrirouter token. Expires in {} seconds.", expiresIn);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error fetching agrirouter token", e);
         }
