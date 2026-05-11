@@ -79,6 +79,7 @@ public class TokenService {
      *
      * @return the access token
      */
+    @SuppressWarnings({"unused"})
     public String getAccessToken() {
         if (cachedTokenResponse == null || isTokenExpired()) {
             fetchToken();
