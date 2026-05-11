@@ -40,4 +40,5 @@ local.env
 .env.local
 .env.*.local
 .local-storage
-storage.properties # Local test data, per default
+# Local test data, per default
+storage.properties
