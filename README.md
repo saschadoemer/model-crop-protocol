@@ -10,7 +10,7 @@ The service provides a structured interface for accessing machine data, task inf
 
 Model Crop Protocol is designed to make agricultural data usable for modern AI-driven applications. Instead of exposing raw or fragmented data directly, the service translates relevant information into well-defined MCP tools, resources, and contextual data structures.
 
-This enables AI agents to.
+This enables AI agents to:
 
 - retrieve agricultural and machine-related information,
 - analyze operational context,
