@@ -39,3 +39,5 @@ build/
 local.env
 .env.local
 .env.*.local
+.local-storage
+storage.properties # Local test data, per default
