@@ -115,6 +115,10 @@ public class TokenService {
             }
             cachedTokenResponse = objectMapper.readValue(response.body(), TokenResponse.class);
             if (cachedTokenResponse == null) {
+            String accessToken = cachedTokenResponse.getAccessToken();
+            if (accessToken == null || accessToken.isBlank()) {
+                throw new RuntimeException("Failed to fetch token: token response is missing a valid access_token value.");
+            }
                 throw new RuntimeException("Failed to fetch token: token response body could not be parsed.");
             }
             Integer expiresIn = cachedTokenResponse.getExpiresIn();
