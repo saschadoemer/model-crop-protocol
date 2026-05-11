@@ -128,7 +128,10 @@ public class TokenService {
             }
             tokenExpirationTime = Instant.now().plusSeconds(expiresIn);
             LOG.info("Successfully fetched and decoded agrirouter token. Expires in {} seconds.", expiresIn);
-        } catch (IOException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Error fetching agrirouter token", e);
+        } catch (IOException e) {
             throw new RuntimeException("Error fetching agrirouter token", e);
         }
     }
