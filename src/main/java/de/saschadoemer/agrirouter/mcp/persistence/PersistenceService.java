@@ -45,6 +45,7 @@ public class PersistenceService {
             LOG.info("Successfully saved state to {}.", storagePath.toAbsolutePath());
         } catch (IOException e) {
             LOG.error("Could not save state to {}.", storagePath.toAbsolutePath(), e);
+            throw new java.io.UncheckedIOException("Could not save state to " + storagePath.toAbsolutePath() + ".", e);
         }
     }
 
