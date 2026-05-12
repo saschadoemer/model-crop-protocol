@@ -29,7 +29,8 @@ public class EndpointService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EndpointService.class);
 
-    private static final String EXTERNAL_ID_PREFIX = "urn:github:saschadoemer:de:";
+    @Value("${agrirouter.external-id-prefix:urn:github:saschadoemer:de:}")
+    private String EXTERNAL_ID_PREFIX;
 
     private final PersistenceService persistenceService;
     private final TokenService tokenService;
