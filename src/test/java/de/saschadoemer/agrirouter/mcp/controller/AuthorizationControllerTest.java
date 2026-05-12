@@ -1,6 +1,7 @@
 package de.saschadoemer.agrirouter.mcp.controller;
 
 import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
+import de.saschadoemer.agrirouter.mcp.service.EndpointService;
 import de.saschadoemer.agrirouter.mcp.service.TokenService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
@@ -14,9 +15,13 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +34,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Property(name = "agrirouter.env.authorize-url", value = "https://app.agrirouter.com/api/authorize")
 @Property(name = "agrirouter.env.token-url", value = "https://api-oauth.agrirouter.com/token")
 @Property(name = "agrirouter.env.api-url", value = "https://api.agrirouter.com")
+@Property(name = "agrirouter.application-id", value = "test-app-id")
+@Property(name = "agrirouter.software-version-id", value = "test-version-id")
+@Property(name = "persistence.storage-path", value = "storage-auth-test.json")
 public class AuthorizationControllerTest {
 
     @Inject
@@ -37,6 +45,11 @@ public class AuthorizationControllerTest {
 
     @Inject
     TokenService tokenService;
+
+    @AfterEach
+    void cleanup() throws IOException {
+        Files.deleteIfExists(Paths.get("storage-auth-test.json"));
+    }
 
     @Test
     void testGetRedirectUri() {
@@ -57,7 +70,7 @@ public class AuthorizationControllerTest {
         String redirectUrl = client.toBlocking().retrieve(
                 HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
         );
-        String state = extractQueryParam(redirectUrl, "state");
+        String state = extractQueryParam(redirectUrl);
 
         // 2. Call the callback with the state and a tenant_id
         HttpResponse<String> response = client.toBlocking().exchange(
@@ -76,7 +89,7 @@ public class AuthorizationControllerTest {
         String redirectUrl = client.toBlocking().retrieve(
                 HttpRequest.GET("/authorization/redirect").header("Authorization", "Bearer test-token")
         );
-        String state = extractQueryParam(redirectUrl, "state");
+        String state = extractQueryParam(redirectUrl);
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
                 client.toBlocking().exchange(
@@ -102,17 +115,17 @@ public class AuthorizationControllerTest {
         assertTrue(exception.getResponse().getBody(String.class).orElse("").contains("State parameter does not match the value originally sent."));
     }
 
-    private static String extractQueryParam(String url, String paramName) {
+    private static String extractQueryParam(String url) {
         String rawQuery = URI.create(url).getRawQuery();
         if (rawQuery == null) {
             throw new RuntimeException("URL has no query string: " + url);
         }
         return Arrays.stream(rawQuery.split("&"))
                 .map(p -> p.split("=", 2))
-                .filter(p -> p[0].equals(paramName))
+                .filter(p -> p[0].equals("state"))
                 .map(p -> p.length > 1 ? p[1] : "")
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Parameter '" + paramName + "' not found in URL"));
+                .orElseThrow(() -> new RuntimeException("Parameter '" + "state" + "' not found in URL"));
     }
 
     @Singleton
@@ -127,6 +140,25 @@ public class AuthorizationControllerTest {
         @Override
         public String getAccessToken() {
             return "test-token";
+        }
+    }
+
+    @Singleton
+    @Replaces(EndpointService.class)
+    @Requires(property = "spec.name", value = "AuthorizationControllerTest")
+    static class MockEndpointService extends EndpointService {
+        public MockEndpointService() {
+            super(null, null, null);
+        }
+
+        @Override
+        public void setup() {
+            // No-op for tests: avoid superclass post-construction logic using null dependencies
+        }
+
+        @Override
+        public void createEndpoint() {
+            // Do nothing
         }
     }
 }

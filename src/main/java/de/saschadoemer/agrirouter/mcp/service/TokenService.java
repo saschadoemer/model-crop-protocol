@@ -1,6 +1,7 @@
 package de.saschadoemer.agrirouter.mcp.service;
 
-import de.saschadoemer.agrirouter.mcp.dto.TokenResponse;
+import de.saschadoemer.agrirouter.mcp.dto.AgrirouterState;
+import de.saschadoemer.agrirouter.mcp.dto.response.TokenResponse;
 import de.saschadoemer.agrirouter.mcp.persistence.PersistenceService;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.serde.ObjectMapper;
@@ -52,7 +53,7 @@ public class TokenService {
         this.persistenceService = persistenceService;
         this.httpClient = HttpClient.newHttpClient();
         if (this.persistenceService != null) {
-            this.persistenceService.loadTenantId().ifPresent(id -> this.tenantId = id);
+            this.persistenceService.load().ifPresent(state -> this.tenantId = state.getTenantId());
         }
     }
 
@@ -73,7 +74,9 @@ public class TokenService {
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
         if (this.persistenceService != null) {
-            this.persistenceService.saveTenantId(tenantId);
+            final AgrirouterState state = this.persistenceService.load().orElse(new AgrirouterState());
+            state.setTenantId(tenantId);
+            this.persistenceService.save(state);
         }
     }
 

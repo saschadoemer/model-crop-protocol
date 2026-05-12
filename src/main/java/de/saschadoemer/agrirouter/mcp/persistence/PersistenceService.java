@@ -1,6 +1,8 @@
 package de.saschadoemer.agrirouter.mcp.persistence;
 
+import de.saschadoemer.agrirouter.mcp.dto.AgrirouterState;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,46 +23,52 @@ public class PersistenceService {
 
     private final Path storagePath;
 
-    public PersistenceService(@Value("${persistence.storage-path:storage.properties}") String storagePath) {
+    private final ObjectMapper objectMapper;
+
+    public PersistenceService(@Value("${persistence.storage-path:storage.json}") String storagePath, ObjectMapper objectMapper) {
         this.storagePath = Paths.get(storagePath);
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * Save the tenant ID.
+     * Save the agrirouter state.
      *
-     * @param tenantId the tenant ID
+     * @param state the agrirouter state
      */
-    public void saveTenantId(String tenantId) {
+    public void save(AgrirouterState state) {
         try {
             if (storagePath.getParent() != null) {
                 Files.createDirectories(storagePath.getParent());
             }
-            Files.writeString(storagePath, tenantId);
-            LOG.info("Successfully saved tenant ID to {}.", storagePath.toAbsolutePath());
+            final String json = objectMapper.writeValueAsString(state);
+            Files.writeString(storagePath, json);
+            LOG.info("Successfully saved state to {}.", storagePath.toAbsolutePath());
         } catch (IOException e) {
-            LOG.error("Could not save tenant ID to {}.", storagePath.toAbsolutePath(), e);
+            LOG.error("Could not save state to {}.", storagePath.toAbsolutePath(), e);
+            throw new java.io.UncheckedIOException("Could not save state to " + storagePath.toAbsolutePath() + ".", e);
         }
     }
 
     /**
-     * Load the tenant ID.
+     * Load the agrirouter state.
      *
-     * @return the tenant ID
+     * @return the agrirouter state
      */
-    public Optional<String> loadTenantId() {
+    public Optional<AgrirouterState> load() {
         if (Files.exists(storagePath)) {
             try {
-                String tenantId = Files.readString(storagePath).trim();
-                LOG.info("Successfully loaded tenant ID from {}.", storagePath.toAbsolutePath());
-                if (tenantId.isEmpty()) {
+                String json = Files.readString(storagePath);
+                LOG.info("Successfully loaded state from {}.", storagePath.toAbsolutePath());
+                if (json.isEmpty()) {
                     return Optional.empty();
                 }
-                return Optional.of(tenantId);
+                return Optional.ofNullable(objectMapper.readValue(json, AgrirouterState.class));
             } catch (IOException e) {
-                LOG.error("Could not load tenant ID from {}.", storagePath.toAbsolutePath(), e);
+                LOG.error("Could not load state from {}.", storagePath.toAbsolutePath(), e);
             }
         }
         return Optional.empty();
     }
+
 
 }

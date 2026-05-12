@@ -1,4 +1,4 @@
-package de.saschadoemer.agrirouter.mcp.dto;
+package de.saschadoemer.agrirouter.mcp.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.serde.annotation.Serdeable;
