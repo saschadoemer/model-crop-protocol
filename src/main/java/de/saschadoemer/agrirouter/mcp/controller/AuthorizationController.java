@@ -96,8 +96,12 @@ public class AuthorizationController {
         if (tenantId != null && !tenantId.isEmpty()) {
             tokenService.setTenantId(tenantId);
             LOG.info("Successfully stored tenant ID: {}", tenantId);
-            endpointService.createEndpoint();
-            LOG.info("Successfully triggered endpoint creation for tenant ID: {}", tenantId);
+            try {
+                endpointService.createEndpoint();
+                LOG.info("Successfully triggered endpoint creation for tenant ID: {}", tenantId);
+            } catch (RuntimeException e) {
+                LOG.error("Endpoint creation failed for tenant ID: {} after successful authorization.", tenantId, e);
+            }
         }
         return HttpResponse.ok("Authorization successful. You can close this window now.");
     }
