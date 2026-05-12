@@ -152,6 +152,11 @@ public class AuthorizationControllerTest {
         }
 
         @Override
+        public void setup() {
+            // No-op for tests: avoid superclass post-construction logic using null dependencies
+        }
+
+        @Override
         public void createEndpoint() {
             // Do nothing
         }
