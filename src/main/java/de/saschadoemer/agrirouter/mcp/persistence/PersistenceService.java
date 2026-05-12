@@ -62,7 +62,7 @@ public class PersistenceService {
                 if (json.isEmpty()) {
                     return Optional.empty();
                 }
-                return Optional.of(objectMapper.readValue(json, AgrirouterState.class));
+                return Optional.ofNullable(objectMapper.readValue(json, AgrirouterState.class));
             } catch (IOException e) {
                 LOG.error("Could not load state from {}.", storagePath.toAbsolutePath(), e);
             }
